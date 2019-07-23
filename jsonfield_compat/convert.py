@@ -20,20 +20,22 @@ def convert_column_to_json(model, column_name):
             "where table_name = %s and column_name = %s;",
             [table_name, column_name])
 
-        current_type = cursor.fetchone()[0].upper()
-        expected_type = 'JSONB' if use_native_jsonfield() else 'TEXT'
+        try:
+            current_type = cursor.fetchone()[0].upper()
+            expected_type = 'JSONB' if use_native_jsonfield() else 'TEXT'
 
-        if current_type != expected_type:
-            print("{app}: Converting {col} to use native {type} field".format(
-                app=model._meta.app_label, col=column_name, type=expected_type))
+            if current_type != expected_type:
+                print("{app}: Converting {col} to use native {type} field".format(
+                    app=model._meta.app_label, col=column_name, type=expected_type))
 
-            cursor.execute(
-                "ALTER TABLE {table} ALTER COLUMN {col} "
-                "TYPE {type} USING {col}::{type};".format(
-                    table=table_name, col=column_name, type=expected_type
+                cursor.execute(
+                    "ALTER TABLE {table} ALTER COLUMN {col} "
+                    "TYPE {type} USING {col}::{type};".format(
+                        table=table_name, col=column_name, type=expected_type
+                    )
                 )
-            )
-
+        except:
+            pass
 
 def convert_model_json_fields(model):
     json_fields = [f for f in model._meta.fields if f.__class__ == JSONField]
